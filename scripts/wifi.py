@@ -1,9 +1,12 @@
-from machine import Pin
+import sys
 import uasyncio as asyncio
+if sys.platform != "linux":
+    from machine import Pin
 
 def connect():
-    led = Pin(2, Pin.OUT)
-    led.on()
+    if sys.platform != "linux":
+        led = Pin(2, Pin.OUT)
+        led.on()
 
     import network
     sta_if = network.WLAN(network.STA_IF)
@@ -18,4 +21,5 @@ def connect():
             pass
 
     print('network config:', sta_if.ifconfig())
-    led.off()
+    if sys.platform != "linux":
+        led.off()

@@ -21,6 +21,8 @@ RUN make submodules
 RUN make axtls
 RUN make
 
-#ENTRYPOINT ["./micropython"]
-
 RUN ./micropython -m upip install uasyncio
+
+COPY ./scripts .
+
+# ENTRYPOINT ["./micropython"]
