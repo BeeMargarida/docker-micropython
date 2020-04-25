@@ -2,7 +2,11 @@ import os
 import gc
 import sys
 import ujson
-from mqtt_as import config, MQTTClient
+if sys.platform != "linux":
+    from mqtt_as import config, MQTTClient
+else:
+    from mqtt_as import MQTTClient
+    from config import config
 import uasyncio as asyncio
 if sys.platform != "linux":
     import logging
@@ -21,7 +25,11 @@ class Server():
         config['ssid'] = 'Calou oh puto do andar de cima'
         config['wifi_pw'] = 'primodowilson'
         config['server'] = self.mqtt_server
-        self.mqtt_client = MQTTClient(config)
+        if sys.platform != "linux":
+            self.mqtt_client = MQTTClient(config)
+        else:
+            config["client_id"]="linux"
+            self.mqtt_client = MQTTClient(**config)
 
         if sys.platform != "linux":
             logging.basicConfig(level=logging.INFO)
@@ -48,7 +56,12 @@ class Server():
             if self.mqtt_client.isconnected():
                 await self.mqtt_client.disconnect()
             self.mqtt_client = None
-            self.mqtt_client = MQTTClient(config)
+
+            if sys.platform != "linux":
+                self.mqtt_client = MQTTClient(config)
+            else:
+                config["client_id"]="linux"
+                self.mqtt_client = MQTTClient(**config)
 
             gc.collect()
             print("Starting up server...")
@@ -143,11 +156,7 @@ class Server():
 
             except MemoryError as e:
                 print("Memory Error")
-                print(gc.mem_free())
                 f.close()
-                print(gc.mem_free())
-                gc.collect()
-                print(gc.mem_free())
                 await writer.awrite("HTTP/1.1 413\r\nContent-Type: text/html\r\n\r\n" + str(e) + "\r\n")
                 await writer.aclose()
 
