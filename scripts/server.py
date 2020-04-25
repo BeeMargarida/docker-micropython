@@ -1,10 +1,11 @@
 import os
 import gc
 import sys
-import logging
 import ujson
 from mqtt_as import config, MQTTClient
 import uasyncio as asyncio
+if sys.platform != "linux":
+    import logging
 
 
 class Server():
@@ -22,7 +23,8 @@ class Server():
         config['server'] = self.mqtt_server
         self.mqtt_client = MQTTClient(config)
 
-        logging.basicConfig(level=logging.INFO)
+        if sys.platform != "linux":
+            logging.basicConfig(level=logging.INFO)
 
         self.run()
 

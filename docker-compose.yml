@@ -5,6 +5,4 @@ services:
     build: .
     ports:
     - "8000:8000"
-    volumes:
-    - ./scripts:/scripts
-    command: sh -c "ls"
+    command: sh -c "./micropython boot.py"
