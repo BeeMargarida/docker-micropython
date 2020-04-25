@@ -66,7 +66,6 @@ def pid_gen():
         pid = pid + 1 if pid < 65535 else 1
         yield pid
 
-
 def qos_check(qos):
     if not (qos == 0 or qos == 1):
         raise ValueError('Only qos 0 and 1 are supported.')
