@@ -8,6 +8,9 @@ def connect():
         led = Pin(2, Pin.OUT)
         led.on()
 
+    if sys.platform == "linux":
+        return
+
     import network
     sta_if = network.WLAN(network.STA_IF)
 
@@ -15,7 +18,6 @@ def connect():
         print('connecting to network...')
         sta_if.active(True)
         sta_if.connect('--', '--')
-        # sta_if.connect('raspberrypi', 'UJr2016#')
         while not sta_if.isconnected():
             # await asyncio.sleep(0.5)
             pass
