@@ -145,7 +145,7 @@ class Server():
                 f = open("script.py", "w")
                 read_l = 0
                 while read_l < l:
-                    tmp = await reader.read(l)
+                    tmp = await reader.readline()
                     print("read")
                     read_l += len(tmp)
                     f.write(tmp)
