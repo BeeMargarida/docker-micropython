@@ -19,7 +19,7 @@ class Server():
         self.running_http = True
         self.running_script = False
         self.mqtt_client = None
-        self.mqtt_server = '192.168.1.132'  # '10.250.7.209'
+        self.mqtt_server = 'mosquitto'  # '10.250.7.209'
         self.memory_error = False
 
         config['ssid'] = 'Calou oh puto do andar de cima'
@@ -146,7 +146,6 @@ class Server():
                 read_l = 0
                 while read_l < l:
                     tmp = await reader.readline()
-                    print("read")
                     read_l += len(tmp)
                     f.write(tmp)
                     gc.collect()
