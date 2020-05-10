@@ -7,7 +7,7 @@ Docker image that setups a micropython container that executes a boot script at 
 
 To launch several instances run: 
 
-`docker-compose up --scale micropython=1`
+`docker-compose up --scale micropython=10`
 
 Get ip addresses of container:
 

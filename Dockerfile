@@ -21,7 +21,7 @@ RUN make submodules
 RUN make axtls
 RUN make
 
-RUN ./micropython -m upip install machine
+# RUN ./micropython -m upip install machine
 
 COPY ./scripts .
 

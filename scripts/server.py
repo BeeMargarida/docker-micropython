@@ -1,13 +1,15 @@
+import uasyncio as asyncio
 import os
 import gc
 import sys
 import ujson
+import ubinascii
+import utime
 if sys.platform != "linux":
     from mqtt_as import config, MQTTClient
 else:
     from mqtt_as import MQTTClient
     from config import config
-import uasyncio as asyncio
 if sys.platform != "linux":
     import logging
 
@@ -25,10 +27,11 @@ class Server():
         config['ssid'] = 'Calou oh puto do andar de cima'
         config['wifi_pw'] = 'primodowilson'
         config['server'] = self.mqtt_server
+        config['client_id'] = ubinascii.hexlify(str(utime.ticks_ms()))
         if sys.platform != "linux":
             self.mqtt_client = MQTTClient(config)
         else:
-            config["client_id"]="linux"
+            config["client_id"] = "linux"
             self.mqtt_client = MQTTClient(**config)
 
         if sys.platform != "linux":
@@ -60,10 +63,9 @@ class Server():
             if sys.platform != "linux":
                 self.mqtt_client = MQTTClient(config)
             else:
-                config["client_id"]="linux"
+                config["client_id"] = "linux"
                 self.mqtt_client = MQTTClient(**config)
 
-            gc.collect()
             print("Starting up server...")
             self.server_task = loop.create_task(self.server)
         except TypeError:
@@ -74,11 +76,10 @@ class Server():
         try:
             # delete previous script
             import script
-            gc.collect()
 
             script.stop()
-            os.remove("script.py")
             del sys.modules['script']
+            os.remove("script.py")
 
             if self.mqtt_client.isconnected():
                 await self.mqtt_client.disconnect()
@@ -119,9 +120,6 @@ class Server():
             await asyncio.sleep(1)
             await writer.aclose()
             return
-        
-        # delete previous script
-        await self.delete_script()
 
         # Get total length of script
         l = 0
@@ -141,6 +139,9 @@ class Server():
             await writer.aclose()
         else:
             try:
+                # delete previous script
+                await self.delete_script()
+                
                 # save script in .py file
                 f = open("script.py", "w")
                 read_l = 0
@@ -148,10 +149,8 @@ class Server():
                     tmp = await reader.readline()
                     read_l += len(tmp)
                     f.write(tmp)
-                    gc.collect()
-                
+
                 f.close()
-                gc.collect()
 
             except MemoryError as e:
                 print("Memory Error")
@@ -167,12 +166,10 @@ class Server():
 
                 # call and execute script
                 import script
-                gc.collect()
 
                 self.mqtt_client._cb = script.on_input
                 self.mqtt_client._connect_handler = script.conn_han
 
-                # await asyncio.sleep(1)
                 await self.mqtt_client.connect()
 
                 print("MQTT Client Connected")
@@ -184,13 +181,12 @@ class Server():
                 await script.exec(self.mqtt_client)
 
                 self.running_script = True
-                gc.collect()
 
             except MemoryError as e:
                 print("Memory Error")
                 await writer.awrite("HTTP/1.1 413\r\nContent-Type: text/html\r\n\r\n" + str(e) + "\r\n")
                 await writer.aclose()
-                
+
                 loop = asyncio.get_event_loop()
                 loop.create_task(self.failsafe())
                 return
