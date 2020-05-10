@@ -10,8 +10,15 @@ import gc
 
 ##############################
 
+import sys
 import wifi
 from server import Server
 
+client_id = None
+print(sys.argv)
+
+if(len(sys.argv) > 1):
+    client_id = sys.argv[1]
+
 wifi.connect()
-server = Server()
+server = Server(client_id)

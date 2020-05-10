@@ -16,22 +16,23 @@ if sys.platform != "linux":
 
 class Server():
 
-    def __init__(self):
+    def __init__(self, client_id):
         print("Starting up server...")
         self.running_http = True
         self.running_script = False
         self.mqtt_client = None
         self.mqtt_server = 'mosquitto'  # '10.250.7.209'
         self.memory_error = False
+        self.start_time =  utime.ticks_ms()
+        self.last_payload = 0
 
         config['ssid'] = 'Calou oh puto do andar de cima'
         config['wifi_pw'] = 'primodowilson'
         config['server'] = self.mqtt_server
-        config['client_id'] = ubinascii.hexlify(str(utime.ticks_ms()))
         if sys.platform != "linux":
             self.mqtt_client = MQTTClient(config)
         else:
-            config["client_id"] = "linux"
+            config['client_id'] = ubinascii.hexlify(client_id)
             self.mqtt_client = MQTTClient(**config)
 
         if sys.platform != "linux":
@@ -110,7 +111,20 @@ class Server():
             data_str = ujson.dumps(data)
             data_len = len(bytes(data_str, "utf-8"))
             await writer.awrite("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length:" + str(data_len) + "\r\n\r\n" + data_str)
-            # await asyncio.sleep(1)
+            await writer.aclose()
+            return
+
+        request_info = req.find('GET /metrics')
+        if request_info != -1:
+            print("GET /ping")
+            current_time = utime.ticks_ms()
+            metrics = ""
+            metrics += "last_payload " + str(self.last_payload) + "\n"
+            metrics += "mem_free " + str(gc.mem_free()) + "\n"
+            metrics += "uptime " + str(utime.ticks_diff(current_time, self.start_time)) + "\n"
+
+            data_len = len(bytes(metrics, "utf-8"))
+            await writer.awrite("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length:" + str(data_len) + "\r\n\r\n" + metrics)
             await writer.aclose()
             return
 
@@ -139,18 +153,30 @@ class Server():
             await writer.aclose()
         else:
             try:
+                self.last_payload = l
+
                 # delete previous script
                 await self.delete_script()
-                
-                # save script in .py file
-                f = open("script.py", "w")
-                read_l = 0
-                while read_l < l:
-                    tmp = await reader.readline()
-                    read_l += len(tmp)
-                    f.write(tmp)
 
-                f.close()
+                if sys.platform != "linux":
+                    # save script in .py file
+                    f = open("script.py", "w")
+                    read_l = 0
+                    while read_l < l:
+                        tmp = await reader.readline()
+                        read_l += len(tmp)
+                        f.write(tmp)
+                    f.close()
+                else:
+                    f = open("script.py", "w")
+                    read_l = 0
+                    postquery = b''
+                    while read_l < l:
+                        tmp = await reader.read(l)
+                        read_l += len(tmp)
+                        postquery += tmp
+                    f.write(postquery)
+                    f.close()
 
             except MemoryError as e:
                 print("Memory Error")
