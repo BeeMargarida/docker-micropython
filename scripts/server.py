@@ -186,6 +186,9 @@ class Server():
 
                 self.memory_error = True
                 return
+            except Exception as e:
+                print(e.args[0])
+                return
 
             try:
                 print("File written!")
@@ -204,7 +207,8 @@ class Server():
                 await writer.awrite("HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\nFile saved.\r\n")
                 await writer.aclose()
 
-                await script.exec(self.mqtt_client)
+                loop = asyncio.get_event_loop()
+                loop.create_task(script.exec(self.mqtt_client))
 
                 self.running_script = True
 
@@ -218,8 +222,8 @@ class Server():
                 return
             except OSError as e:
                 # Exception raised when MQTT Broker address is wrong
-                yield from writer.awrite("HTTP/1.1 424\r\nContent-Type: text/html\r\n\r\n" + str(e) + "\r\n")
-                yield from writer.aclose()
+                await writer.awrite("HTTP/1.1 424\r\nContent-Type: text/html\r\n\r\n" + str(e) + "\r\n")
+                await writer.aclose()
                 return
             except Exception as e:
                 print(e)
